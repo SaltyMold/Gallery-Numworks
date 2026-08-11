@@ -26,6 +26,8 @@ endef
 
 src = $(addprefix src/,\
   libs/storage.c \
+  libs/TJpg_Decoder/tjpgd.c \
+  display.c \
   short.c \
   main.c \
 )
