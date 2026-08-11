@@ -1,0 +1,10 @@
+python/convert-to-data/input/*
+python/convert-to-data/output/*
+python/convert-to-data/output.bin
+
+python/optimize/input/*
+python/optimize/output/*
+
+python/quality-test/output/*
+python/quality-test/input.png
+python/quality-test/input.jpg

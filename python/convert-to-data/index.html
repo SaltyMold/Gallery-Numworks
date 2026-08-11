@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Viewer - output.bin</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #333;
+        }
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        input[type="file"],
+        input[type="number"],
+        button {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        input[type="file"] {
+            flex: 1;
+            min-width: 200px;
+        }
+        input[type="number"] {
+            width: 100px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+            border: none;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        .info {
+            background-color: #f0f8ff;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            border-left: 4px solid #007bff;
+        }
+        .image-container {
+            text-align: center;
+            margin-top: 20px;
+        }
+        img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 4px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        }
+        .error {
+            color: #d9534f;
+            background-color: #f2dede;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            border-left: 4px solid #d9534f;
+        }
+        .success {
+            color: #5cb85c;
+            background-color: #dff0d8;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            border-left: 4px solid #5cb85c;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>output.bin Image Viewer</h1>
+        
+        <div class="controls">
+            <input type="number" id="imageNumber" min="0" placeholder="Image #" disabled>
+            <button id="displayBtn" onclick="displayImage()" disabled>Display Image</button>
+        </div>
+
+        <div id="message"></div>
+        <div id="info" class="info" style="display: none;"></div>
+        <div class="image-container">
+            <img id="imageDisplay" style="display: none;">
+        </div>
+    </div>
+
+    <script>
+        let binData = null;
+        let imageOffsets = [];
+        let totalImages = 0;
+        let collageCount = 0;
+
+        // Load output.bin on page load
+        window.addEventListener('load', loadOutputBin);
+
+        function loadOutputBin() {
+            fetch('output.bin')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('output.bin not found in the same directory');
+                    }
+                    return response.arrayBuffer();
+                })
+                .then(buffer => {
+                    try {
+                        binData = new Uint8Array(buffer);
+                        parseBinFile();
+                    } catch (error) {
+                        showError('Error loading file: ' + error.message);
+                    }
+                })
+                .catch(error => {
+                    showError('Error: ' + error.message);
+                });
+        }
+
+        function parseBinFile() {
+            if (binData.length < 8) {
+                showError('Invalid bin file: too small');
+                return;
+            }
+
+            // Read header
+            collageCount = readUint32(binData, 0);
+            totalImages = readUint32(binData, 4);
+
+            if (totalImages === 0) {
+                showError('No images found in bin file');
+                return;
+            }
+
+            // Read offsets
+            imageOffsets = [];
+            for (let i = 0; i < totalImages; i++) {
+                const offset = readUint32(binData, 8 + i * 4);
+                imageOffsets.push(offset);
+            }
+
+            // Update UI
+            document.getElementById('imageNumber').disabled = false;
+            document.getElementById('imageNumber').max = totalImages - 1;
+            document.getElementById('displayBtn').disabled = false;
+
+            showInfo(`Loaded: ${totalImages} images, ${collageCount} collages`);
+        }
+
+        function readUint32(data, offset) {
+            return data[offset] | 
+                   (data[offset + 1] << 8) | 
+                   (data[offset + 2] << 16) | 
+                   (data[offset + 3] << 24);
+        }
+
+        function displayImage() {
+            const imageNum = parseInt(document.getElementById('imageNumber').value);
+            
+            if (isNaN(imageNum) || imageNum < 0 || imageNum >= totalImages) {
+                showError(`Invalid image number. Please enter a number between 0 and ${totalImages - 1}`);
+                return;
+            }
+
+            try {
+                const startOffset = imageOffsets[imageNum];
+                const endOffset = imageNum < totalImages - 1 
+                    ? imageOffsets[imageNum + 1] 
+                    : binData.length;
+
+                const jpegData = binData.slice(startOffset, endOffset);
+                const blob = new Blob([jpegData], { type: 'image/jpeg' });
+                const url = URL.createObjectURL(blob);
+
+                const img = document.getElementById('imageDisplay');
+                img.src = url;
+                img.style.display = 'block';
+
+                // Display label: Collage 1, 2, ... or Image 1, 2, ...
+                let label;
+                if (imageNum < collageCount) {
+                    label = `Collage ${imageNum + 1}`;
+                } else {
+                    label = `Image ${imageNum - collageCount + 1}`;
+                }
+                showSuccess(`Displaying ${label}`);
+                document.getElementById('message').innerHTML = '';
+            } catch (error) {
+                showError('Error displaying image: ' + error.message);
+            }
+        }
+
+        function showError(message) {
+            document.getElementById('message').innerHTML = `<div class="error">${message}</div>`;
+        }
+
+        function showSuccess(message) {
+            document.getElementById('message').innerHTML = `<div class="success">${message}</div>`;
+        }
+
+        function showInfo(message) {
+            const info = document.getElementById('info');
+            info.innerHTML = message;
+            info.style.display = 'block';
+        }
+
+        // Allow pressing Enter to display image
+        document.getElementById('imageNumber').addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                displayImage();
+            }
+        });
+    </script>
+</body>
+</html>
