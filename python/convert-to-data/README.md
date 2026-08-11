@@ -33,7 +33,7 @@ python main.py -q 80 -a input/ -c
 - Without `-c`, the script reuses existing images in `output` and only regenerates missing ones.
 - Supported formats are: `.jpg`, `.jpeg`, `.png`, `.webp`, and `.avif`.
 - Unsupported files are skipped and printed with `not supported`.
-- You can pass as many image paths as you want (limited only by available memory).
+- You can pass as many image paths as you want (4294967295 actually) (limited by available memory ~2.5MB).
 - The script resizes every input image to `320x240` if needed.
 
 ## Output

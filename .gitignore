@@ -8,3 +8,9 @@ python/optimize/output/*
 python/quality-test/output/*
 python/quality-test/input.png
 python/quality-test/input.jpg
+
+package.json
+package-lock.json
+node_modules/
+
+output/
