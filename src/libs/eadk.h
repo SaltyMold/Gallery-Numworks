@@ -11,6 +11,7 @@
 #include <stdlib.h>
 
 /*--- Large-font = 10px*18px --- Small-font = 7px*12px ---*/
+// max ram : 128 KB
 
 // Types and constants 
 

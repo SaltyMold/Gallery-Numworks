@@ -26,6 +26,7 @@ endef
 
 src = $(addprefix src/,\
   libs/storage.c \
+  short.c \
   main.c \
 )
 
@@ -81,31 +82,31 @@ check: $(BUILD_DIR_BUILD)/app.bin
 run: build
 	@echo "RUN ($(PLATFORM))"
 	$(Q) if [ "$(PLATFORM)" = "simulator" ]; then \
-		if [ -s sim/input.bin ]; then \
-			./sim/epsilon.bin --nwb $(BUILD_DIR_SIMULATOR)/app.nwb --nwb-external-data sim/input.bin; \
+		if [ -s sim/output.bin ]; then \
+			./sim/epsilon.bin --nwb $(BUILD_DIR_SIMULATOR)/app.nwb --nwb-external-data sim/output.bin; \
 		else \
 			./sim/epsilon.bin --nwb $(BUILD_DIR_SIMULATOR)/app.nwb; \
 		fi; \
 	else \
-		if [ -s sim/input.bin ]; then \
-			$(NWLINK) install-nwa --external-data sim/input.bin $(BUILD_DIR_BUILD)/app.nwa; \
+		if [ -s sim/output.bin ]; then \
+			$(NWLINK) install-nwa --external-data sim/output.bin $(BUILD_DIR_BUILD)/app.nwa; \
 		else \
 			$(NWLINK) install-nwa $(BUILD_DIR_BUILD)/app.nwa; \
 		fi; \
 	fi
 
-$(BUILD_DIR_BUILD)/%.bin: $(BUILD_DIR_BUILD)/%.nwa sim/input.bin
+$(BUILD_DIR_BUILD)/%.bin: $(BUILD_DIR_BUILD)/%.nwa sim/output.bin
 	@echo "BIN     $@"
-	$(Q) if [ -s sim/input.bin ]; then \
-		$(NWLINK) nwa-bin --external-data sim/input.bin $< $@; \
+	$(Q) if [ -s sim/output.bin ]; then \
+		$(NWLINK) nwa-bin --external-data sim/output.bin $< $@; \
 	else \
 		$(NWLINK) nwa-bin $< $@; \
 	fi
 
-$(BUILD_DIR_BUILD)/%.elf: $(BUILD_DIR_BUILD)/%.nwa sim/input.bin
+$(BUILD_DIR_BUILD)/%.elf: $(BUILD_DIR_BUILD)/%.nwa sim/output.bin
 	@echo "ELF     $@"
-	$(Q) if [ -s sim/input.bin ]; then \
-		$(NWLINK) nwa-elf --external-data sim/input.bin $< $@; \
+	$(Q) if [ -s sim/output.bin ]; then \
+		$(NWLINK) nwa-elf --external-data sim/output.bin $< $@; \
 	else \
 		$(NWLINK) nwa-elf $< $@; \
 	fi

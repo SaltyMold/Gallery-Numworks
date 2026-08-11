@@ -11,11 +11,11 @@ from PIL import Image
 OUTPUT_DIR_NAME = "output"
 RESIZED_DIR_NAME = "resized"
 QUALITY_DIR_NAME = "quality"
-COLLAGE_DIR_NAME = "collage"
+preview_DIR_NAME = "preview"
 OUTPUT_BIN_NAME = "output.bin"
 TARGET_SIZE = (320, 240)
-COLLAGE_CELL_SIZE = (64, 48)
-COLLAGE_GRID = (5, 5)
+preview_CELL_SIZE = (64, 48)
+preview_GRID = (5, 5)
 SUPPORTED_IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp", ".avif"}
 
 
@@ -73,45 +73,52 @@ def save_intermediate_image(image: Image.Image, output_dir: str, filename: str) 
     return output_path
 
 
-def build_collage(images: list[Image.Image]) -> Image.Image:
-    collage = Image.new("RGB", TARGET_SIZE)
-    cell_w, cell_h = COLLAGE_CELL_SIZE
-    max_cells = COLLAGE_GRID[0] * COLLAGE_GRID[1]
+def build_preview(images: list[Image.Image]) -> Image.Image:
+    preview = Image.new("RGB", TARGET_SIZE)
+    cell_w, cell_h = preview_CELL_SIZE
+    max_cells = preview_GRID[0] * preview_GRID[1]
     for index in range(max_cells):
-        x = (index % COLLAGE_GRID[0]) * cell_w
-        y = (index // COLLAGE_GRID[0]) * cell_h
+        x = (index % preview_GRID[0]) * cell_w
+        y = (index // preview_GRID[0]) * cell_h
         if index < len(images):
-            cell_image = images[index].resize(COLLAGE_CELL_SIZE, Image.LANCZOS)
-            collage.paste(cell_image, (x, y))
+            cell_image = images[index].resize(preview_CELL_SIZE, Image.LANCZOS)
+            preview.paste(cell_image, (x, y))
         else:
-            collage.paste(Image.new("RGB", COLLAGE_CELL_SIZE, (0, 0, 0)), (x, y))
-    return collage
+            preview.paste(Image.new("RGB", preview_CELL_SIZE, (0, 0, 0)), (x, y))
+    return preview
 
 
-def encode_images_to_bin(jpeg_data_list: list[bytes], collage_count: int) -> bytes:
+def encode_images_to_bin(jpeg_data_list: list[bytes], preview_count: int) -> bytes:
     total_images = len(jpeg_data_list)
     if total_images == 0:
         raise ValueError("At least one input image is required.")
 
-    header_size = 8 + 4 * total_images
+    # Format: 4 bytes nb_previews, 4 bytes nb_total_images, then offset/size pairs
+    header_size = 8 + 8 * total_images
     offsets = []
+    sizes = []
     current_offset = header_size
     for data in jpeg_data_list:
         offsets.append(current_offset)
+        sizes.append(len(data))
         current_offset += len(data)
 
     result = bytearray()
-    result.extend(struct.pack("<I", collage_count))
+    # Write nb_previews and nb_total_images
+    result.extend(struct.pack("<I", preview_count))
     result.extend(struct.pack("<I", total_images))
-    for offset in offsets:
+    # Write offset/size pairs
+    for offset, size in zip(offsets, sizes):
         result.extend(struct.pack("<I", offset))
+        result.extend(struct.pack("<I", size))
+    # Write image data
     for data in jpeg_data_list:
         result.extend(data)
     return bytes(result)
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Convert multiple images to a single output.bin with JPEG data and a collage image.")
+    parser = argparse.ArgumentParser(description="Convert multiple images to a single output.bin with JPEG data and a preview image.")
     parser.add_argument(
         "-q",
         dest="quality",
@@ -159,13 +166,13 @@ def main() -> None:
 
     resized_dir = os.path.join(output_dir, RESIZED_DIR_NAME)
     quality_dir = os.path.join(output_dir, QUALITY_DIR_NAME)
-    collage_dir = os.path.join(output_dir, COLLAGE_DIR_NAME)
-    collage_resize_dir = os.path.join(collage_dir, RESIZED_DIR_NAME)
-    collage_quality_dir = os.path.join(collage_dir, QUALITY_DIR_NAME)
+    preview_dir = os.path.join(output_dir, preview_DIR_NAME)
+    preview_resize_dir = os.path.join(preview_dir, RESIZED_DIR_NAME)
+    preview_quality_dir = os.path.join(preview_dir, QUALITY_DIR_NAME)
     os.makedirs(resized_dir, exist_ok=True)
     os.makedirs(quality_dir, exist_ok=True)
-    os.makedirs(collage_resize_dir, exist_ok=True)
-    os.makedirs(collage_quality_dir, exist_ok=True)
+    os.makedirs(preview_resize_dir, exist_ok=True)
+    os.makedirs(preview_quality_dir, exist_ok=True)
 
     image_paths: list[str] = []
     if args.input_dir:
@@ -224,24 +231,24 @@ def main() -> None:
                 jpeg_bytes_list.append(jpeg_bytes)
                 processed_images.append(img)
 
-    collage_count = (len(processed_images) + 24) // 25
-    collage_jpeg_list = []
-    for collage_index in range(collage_count):
-        collage_images = processed_images[collage_index * 25 : (collage_index + 1) * 25]
-        collage = build_collage(collage_images)
-        save_intermediate_image(collage, collage_resize_dir, f"collage_{collage_index}.png")
-        collage_jpeg_path = os.path.join(collage_quality_dir, f"collage_{collage_index}_{args.quality}.jpg")
-        collage.save(collage_jpeg_path, format="JPEG", quality=args.quality)
+    preview_count = (len(processed_images) + 24) // 25
+    preview_jpeg_list = []
+    for preview_index in range(preview_count):
+        preview_images = processed_images[preview_index * 25 : (preview_index + 1) * 25]
+        preview = build_preview(preview_images)
+        save_intermediate_image(preview, preview_resize_dir, f"preview_{preview_index}.png")
+        preview_jpeg_path = os.path.join(preview_quality_dir, f"preview_{preview_index}_{args.quality}.jpg")
+        preview.save(preview_jpeg_path, format="JPEG", quality=args.quality)
         
-        # Read and store collage JPEG data
-        with open(collage_jpeg_path, "rb") as collage_jpeg_file:
-            collage_jpeg_list.append(collage_jpeg_file.read())
+        # Read and store preview JPEG data
+        with open(preview_jpeg_path, "rb") as preview_jpeg_file:
+            preview_jpeg_list.append(preview_jpeg_file.read())
 
-    # Combine: collages first, then individual images
-    final_jpeg_bytes_list = collage_jpeg_list + jpeg_bytes_list
+    # Combine: previews first, then individual images
+    final_jpeg_bytes_list = preview_jpeg_list + jpeg_bytes_list
 
     with open(output_bin_path, "wb") as output_bin_file:
-        output_bin_file.write(encode_images_to_bin(final_jpeg_bytes_list, collage_count))
+        output_bin_file.write(encode_images_to_bin(final_jpeg_bytes_list, preview_count))
 
     print(f"Created: {output_bin_path}")
     print(f"Intermediate files are in: {output_dir}")

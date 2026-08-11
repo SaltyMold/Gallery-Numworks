@@ -47,7 +47,7 @@ The `output` directory contains:
 
 - `resized/`: each image converted to `320x240` and RGB.
 - `quality/`: each converted image saved as JPEG at the requested quality.
-- `collage/`: collage images.
+- `preview/`: preview images.
 
 ### Intermediate files
 
@@ -59,51 +59,53 @@ The `output/quality` directory contains:
 
 - `quality_<index>_<quality>_<basename>`: each converted image saved as JPEG at the requested quality.
 
-The `output/collage` directory contains:
+The `output/preview` directory contains:
 
-- `resize/`: PNG collage images.
-- `quality/`: JPEG collage images.
+- `resize/`: PNG preview images.
+- `quality/`: JPEG preview images.
 
-The `output/collage/resize` directory contains:
+The `output/preview/resize` directory contains:
 
-- `collage_0.png`, `collage_1.png`, ...
+- `preview_0.png`, `preview_1.png`, ...
 
-The `output/collage/quality` directory contains:
+The `output/preview/quality` directory contains:
 
-- `collage_0_<quality>.jpg`, `collage_1_<quality>.jpg`, ...
+- `preview_0_<quality>.jpg`, `preview_1_<quality>.jpg`, ...
 
 ## Binary format (`output.bin`)
 
 The file format is:
 
-1. Bytes 0..3: little-endian 32-bit number of collage images.
-2. Bytes 4..7: little-endian 32-bit total number of input images.
+1. Bytes 0..3: little-endian 32-bit number of preview images.
+2. Bytes 4..7: little-endian 32-bit total number of images.
 3. Bytes 8..11: little-endian 32-bit offset of image 0.
-4. Bytes 12..15: little-endian 32-bit offset of image 1 (if present).
-5. Bytes 16..19: little-endian 32-bit offset of image 2 (if present).
-6. ...
-7. Image data sections: each image is stored as raw JPEG data starting at the corresponding offset.
-
-- A collage image can contain up to 25 input images.
+4. Bytes 12..15: little-endian 32-bit size of image 0 (in bytes).
+5. Bytes 16..19: little-endian 32-bit offset of image 1 (if present).
+6. Bytes 20..23: little-endian 32-bit size of image 1 (if present).
+7. ...
+8. Image data sections: each image is stored as raw JPEG data starting at the corresponding offset.
 
 ### Example layout for 2 images
 
-- Bytes 0..3: number of collage images (32-bit)
-- Bytes 4..7: total number of input images (32-bit)
+- Bytes 0..3: preview count (32-bit) = 1
+- Bytes 4..7: total number of images (32-bit) = 2
 - Bytes 8..11: offset for image 0 (32-bit)
-- Bytes 12..15: offset for image 1 (32-bit)
-- Bytes 16..: JPEG bytes for image 0 followed by JPEG bytes for image 1
+- Bytes 12..15: size for image 0 (32-bit)
+- Bytes 16..19: offset for image 1 (32-bit)
+- Bytes 20..23: size for image 1 (32-bit)
+- Bytes 24..: JPEG bytes for image 0 followed by JPEG bytes for image 1
 
-## Collage generation
+## preview generation
 
-Collage images are built in groups of up to 25 input images. Each image is resized to `64x48` and pasted into a `5x5` grid, producing a final collage size of `320x240`.
+preview images are built in groups of up to 25 input images. Each image is resized to `64x48` and pasted into a `5x5` grid, producing a final preview size of `320x240`.
 
-- If there are fewer than 25 images in a collage group, remaining cells are filled with black.
-- If more than 25 input images are provided, additional collage images are created.
-- The first two bytes of `output.bin` report the collage image count and the total image count.
+- If there are fewer than 25 images in a preview group, remaining cells are filled with black.
+- If more than 25 input images are provided, additional preview images are created.
+- Preview images are stored at the beginning of the `output.bin` file, before individual images.
 
 ## Notes
 
 - The script validates JPEG quality and file existence.
 - The `output.bin` file always uses the requested JPEG quality for each image's stored JPEG bytes.
 - Image caching: if both `output/resized/` and `output/quality/` versions of an image exist, they are reused instead of being regenerated (unless `-c` is used).
+- Preview images are generated internally as 5×5 grids (25 images per preview, up to 64×48 pixels per cell) but are stored in the binary file just like regular images.

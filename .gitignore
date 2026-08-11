@@ -1,3 +1,5 @@
+.vscode/
+
 python/convert-to-data/input/*
 python/convert-to-data/output/*
 python/convert-to-data/output.bin

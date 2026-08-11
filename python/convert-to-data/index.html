@@ -111,8 +111,9 @@
     <script>
         let binData = null;
         let imageOffsets = [];
+        let imageSizes = [];
         let totalImages = 0;
-        let collageCount = 0;
+        let previewCount = 0;
 
         // Load output.bin on page load
         window.addEventListener('load', loadOutputBin);
@@ -145,7 +146,7 @@
             }
 
             // Read header
-            collageCount = readUint32(binData, 0);
+            previewCount = readUint32(binData, 0);
             totalImages = readUint32(binData, 4);
 
             if (totalImages === 0) {
@@ -153,11 +154,14 @@
                 return;
             }
 
-            // Read offsets
+            // Read offset/size pairs starting at byte 8
             imageOffsets = [];
+            imageSizes = [];
             for (let i = 0; i < totalImages; i++) {
-                const offset = readUint32(binData, 8 + i * 4);
+                const offset = readUint32(binData, 8 + i * 8);
+                const size = readUint32(binData, 12 + i * 8);
                 imageOffsets.push(offset);
+                imageSizes.push(size);
             }
 
             // Update UI
@@ -165,7 +169,7 @@
             document.getElementById('imageNumber').max = totalImages - 1;
             document.getElementById('displayBtn').disabled = false;
 
-            showInfo(`Loaded: ${totalImages} images, ${collageCount} collages`);
+            showInfo(`Loaded: ${totalImages} images, ${previewCount} previews`);
         }
 
         function readUint32(data, offset) {
@@ -185,9 +189,8 @@
 
             try {
                 const startOffset = imageOffsets[imageNum];
-                const endOffset = imageNum < totalImages - 1 
-                    ? imageOffsets[imageNum + 1] 
-                    : binData.length;
+                const size = imageSizes[imageNum];
+                const endOffset = startOffset + size;
 
                 const jpegData = binData.slice(startOffset, endOffset);
                 const blob = new Blob([jpegData], { type: 'image/jpeg' });
@@ -197,14 +200,7 @@
                 img.src = url;
                 img.style.display = 'block';
 
-                // Display label: Collage 1, 2, ... or Image 1, 2, ...
-                let label;
-                if (imageNum < collageCount) {
-                    label = `Collage ${imageNum + 1}`;
-                } else {
-                    label = `Image ${imageNum - collageCount + 1}`;
-                }
-                showSuccess(`Displaying ${label}`);
+                showSuccess(`Displaying image ${imageNum}`);
                 document.getElementById('message').innerHTML = '';
             } catch (error) {
                 showError('Error displaying image: ' + error.message);
