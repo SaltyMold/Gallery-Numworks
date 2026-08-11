@@ -25,4 +25,16 @@ int display_image(uint32_t index);
 
 void safe_display_image(uint32_t index);
 
+/*-------------------------------------------*/
+
+#define LARGE_FONT true
+#define TEXT_COLOR eadk_color_black
+#define BACKGROUND_COLOR eadk_color_white
+#define RECTANGLE_COLOR eadk_color_yellow
+
+void short_display_draw_string(const char* text, eadk_point_t point);
+void short_clear_screen();
+void draw_empty_rectangle(eadk_rect_t rect, eadk_color_t color);
+void short_draw_empty_rectangle(eadk_rect_t rect);
+
 #endif

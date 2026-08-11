@@ -1,6 +1,5 @@
 #include "display.h"
 #include <string.h>
-#include "short.h"
 
 image_t *images = NULL;
 const uint8_t* jpeg_stream_data = NULL;
@@ -23,8 +22,8 @@ static int jpeg_output(JDEC* jd, void* bitmap, JRECT* jrect) {
     eadk_rect_t rect = {
         .x = (uint16_t)jrect->left,
         .y = (uint16_t)jrect->top,
-        .width = (uint16_t)(jrect->right + 1 - jrect->left),
-        .height = (uint16_t)(jrect->bottom + 1 - jrect->top)
+        .w = (uint16_t)(jrect->right + 1 - jrect->left),
+        .h = (uint16_t)(jrect->bottom + 1 - jrect->top)
     };
     eadk_display_push_rect(rect, (const eadk_color_t*)bitmap);
     return 1;
@@ -62,4 +61,24 @@ void safe_display_image(uint32_t index) {
         }
     }
 
+}
+
+/*-----------------------------------------------------------*/
+
+void short_display_draw_string(const char* text, eadk_point_t point){
+    eadk_display_draw_string(text, point, LARGE_FONT, TEXT_COLOR, BACKGROUND_COLOR);
+}
+void short_clear_screen(){
+    eadk_display_push_rect_uniform(eadk_screen_rect, BACKGROUND_COLOR);
+}
+
+void draw_empty_rectangle(eadk_rect_t rect, eadk_color_t color) {
+    eadk_display_push_rect_uniform((eadk_rect_t){rect.x, rect.y, rect.w, 1}, color);
+    eadk_display_push_rect_uniform((eadk_rect_t){rect.x, rect.y, 1, rect.h}, color);
+    eadk_display_push_rect_uniform((eadk_rect_t){rect.x, rect.y + rect.h, rect.w, 1}, color);
+    eadk_display_push_rect_uniform((eadk_rect_t){rect.x + rect.w, rect.y, 1, rect.h}, color);
+}
+
+void short_draw_empty_rectangle(eadk_rect_t rect){
+    draw_empty_rectangle(rect, RECTANGLE_COLOR);
 }

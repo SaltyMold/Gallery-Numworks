@@ -33,8 +33,8 @@ typedef struct {
 typedef struct {
   uint16_t x;
   uint16_t y;
-  uint16_t width;
-  uint16_t height;
+  uint16_t w;
+  uint16_t h;
 } eadk_rect_t;
 
 // Keyboard and Events
