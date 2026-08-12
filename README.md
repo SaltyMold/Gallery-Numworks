@@ -12,9 +12,9 @@
 
 _This is a simple image gallery app for the Numworks calculator._
 
-<video src="./github_assets/app.mp4" controls width="600"></video>
+https://github.com/user-attachments/assets/cec7e7ee-28a6-42f7-804e-45983eda0037
 
-## 📕 Install the app
+## Install the app
 
 To install this app, you'll need to:
 1. Download the **`Gallery.nwa` file**, which you can download from the [Releases](https://github.com/SaltyMold/Gallery-Numworks/releases).
@@ -23,7 +23,7 @@ To install this app, you'll need to:
 4. Head to **[my.numworks.com/apps](https://my.numworks.com/apps)** to send the **`nwa` file** on your calculator along the **`nwip` file**.
 
 
-## 📕 How to use the app
+## How to use the app
 
 | Key   | Action        |
 |-------|---------------|
@@ -36,7 +36,7 @@ To install this app, you'll need to:
 | Back | Go back to the gallery    |
 | Shift | Debug    |
 
-## 🛠️ Build the app
+## Build the app
 
 I made tutorials here :
 - [C-App-Guide-for-Numworks](https://github.com/SaltyMold/C-App-Guide-for-Numworks)
