@@ -12,7 +12,7 @@
 
 _This is a simple image gallery app for the Numworks calculator._
 
-<video src="./github_assets/app.mp4" controls width="600"></video>
+https://github.com/user-attachments/assets/cec7e7ee-28a6-42f7-804e-45983eda0037
 
 ## 📕 Install the app
 
