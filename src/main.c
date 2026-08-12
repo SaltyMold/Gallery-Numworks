@@ -3,6 +3,8 @@
 #include "macro.h"
 #include "input.h"
 
+#include <stdio.h>
+
 #include <stdint.h>
 #include <stdlib.h>
 
@@ -96,6 +98,21 @@ int main(void) {
             }
         }
 
+        if (keyboard_only_key_down(state, eadk_key_shift )) {
+            char buf[64];
+            snprintf(buf, sizeof buf, "external_data_size = %llu", (unsigned long long)external_data_size);
+            short_display_draw_string(buf, (eadk_point_t){0, 0});
+            snprintf(buf, sizeof buf, "nb_previews = %u", (unsigned)nb_previews);
+            short_display_draw_string(buf, (eadk_point_t){0, 20});
+            snprintf(buf, sizeof buf, "nb_images = %u", (unsigned)nb_images);
+            short_display_draw_string(buf, (eadk_point_t){0, 40});
+            snprintf(buf, sizeof buf, "nb_total_images = %u", (unsigned)nb_total_images);
+            short_display_draw_string(buf, (eadk_point_t){0, 60});
+            snprintf(buf, sizeof buf, "current_index = %u", (unsigned)current_index);
+            short_display_draw_string(buf, (eadk_point_t){0, 80});
+            snprintf(buf, sizeof buf, "preview_mode = %s", BOOL_STR(preview_mode));
+            short_display_draw_string(buf, (eadk_point_t){0, 100});
+        }
     }
 
     free(images);

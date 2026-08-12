@@ -73,10 +73,6 @@ void preview_screen(){
     safe_display_image((current_index) / 25);
 
     short_draw_empty_rectangle((eadk_rect_t){column * 64, line * 48, 64 - 1, 48 - 1});
-    
-    //char buf[16];
-    //FORMAT_SIZE(buf, current_index);
-    //short_display_draw_string(buf, (eadk_point_t){0,0});
 }
 
 void image_screen(){

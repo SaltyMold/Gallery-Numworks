@@ -19,7 +19,7 @@ endef
 NWLINK = npm_config_loglevel=silent npx --yes --quiet -- nwlink@0.0.19
 LINK_GC = 1
 LTO = 1
-EXTERNAL_DATA ?= sim/output.nwip
+EXTERNAL_DATA ?= sim/output2.nwip
 
 define object_for
 $(addprefix $(BUILD_DIR)/,$(addsuffix .o,$(basename $(1))))
