@@ -27,6 +27,14 @@ void safe_display_image(uint32_t index);
 
 /*-------------------------------------------*/
 
+extern uint32_t current_index;
+extern uint32_t nb_previews;
+
+void preview_screen();
+void image_screen();
+
+/*-------------------------------------------*/
+
 #define LARGE_FONT true
 #define TEXT_COLOR eadk_color_black
 #define BACKGROUND_COLOR eadk_color_white

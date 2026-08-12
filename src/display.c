@@ -1,5 +1,6 @@
 #include "display.h"
 #include <string.h>
+#include "macro.h"
 
 image_t *images = NULL;
 const uint8_t* jpeg_stream_data = NULL;
@@ -65,6 +66,26 @@ void safe_display_image(uint32_t index) {
 
 /*-----------------------------------------------------------*/
 
+void preview_screen(){
+    uint8_t column = ((current_index % 25) % 5);
+    uint8_t line = ((current_index % 25) / 5);
+
+    safe_display_image((current_index) / 25);
+
+    short_draw_empty_rectangle((eadk_rect_t){column * 64, line * 48, 64 - 1, 48 - 1});
+    
+    char buf[16];
+    FORMAT_SIZE(buf, current_index);
+    short_display_draw_string(buf, (eadk_point_t){0,0});
+}
+
+void image_screen(){
+    safe_display_image(current_index + nb_previews);
+}
+
+
+/*-----------------------------------------------------------*/
+
 void short_display_draw_string(const char* text, eadk_point_t point){
     eadk_display_draw_string(text, point, LARGE_FONT, TEXT_COLOR, BACKGROUND_COLOR);
 }
@@ -82,3 +103,5 @@ void draw_empty_rectangle(eadk_rect_t rect, eadk_color_t color) {
 void short_draw_empty_rectangle(eadk_rect_t rect){
     draw_empty_rectangle(rect, RECTANGLE_COLOR);
 }
+
+

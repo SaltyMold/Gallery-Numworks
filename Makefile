@@ -1,8 +1,8 @@
-#Q ?= @
+Q ?= @
 CC = arm-none-eabi-gcc
 BUILD_DIR = output
-BUILD_DIR_BUILD = output/build
-BUILD_DIR_SIMULATOR = output/sim
+BUILD_DIR_DEVICE = output/device
+BUILD_DIR_SIMULATOR = output/simulator
 CC_SIMULATOR = gcc
 CXX_SIMULATOR = g++
 CFLAGS_SIMULATOR = -std=c99
@@ -16,7 +16,7 @@ EPSILON_LIBS = sim/libs/eadk.a sim/libs/ion.a sim/libs/sdl.a sim/libs/kandinsky.
 define object_for_dir
 $(addprefix $(1)/,$(addsuffix .o,$(basename $(2))))
 endef
-NWLINK = npx --yes -- nwlink@0.0.19
+NWLINK = npm_config_loglevel=silent npx --yes --quiet -- nwlink@0.0.19
 LINK_GC = 1
 LTO = 1
 
@@ -28,6 +28,7 @@ src = $(addprefix src/,\
   libs/storage.c \
   libs/TJpg_Decoder/tjpgd.c \
   display.c \
+  input.c \
   main.c \
 )
 
@@ -70,12 +71,12 @@ endif
 ifeq ($(PLATFORM),simulator)
 BUILD_TARGET := $(BUILD_DIR_SIMULATOR)/app.nwb
 else
-BUILD_TARGET := $(BUILD_DIR_BUILD)/app.nwa
+BUILD_TARGET := $(BUILD_DIR_DEVICE)/app.nwa
 endif
 build: $(BUILD_TARGET)
 
 .PHONY: check
-check: $(BUILD_DIR_BUILD)/app.bin
+check: $(BUILD_DIR_DEVICE)/app.bin
 
 
 .PHONY: run
@@ -90,13 +91,13 @@ run: build
 		fi; \
 	else \
 		if [ -s sim/output.bin ]; then \
-			$(NWLINK) install-nwa --external-data sim/output.bin $(BUILD_DIR_BUILD)/app.nwa; \
+			$(NWLINK) install-nwa --external-data sim/output.bin $(BUILD_DIR_DEVICE)/app.nwa; \
 		else \
-			$(NWLINK) install-nwa $(BUILD_DIR_BUILD)/app.nwa; \
+			$(NWLINK) install-nwa $(BUILD_DIR_DEVICE)/app.nwa; \
 		fi; \
 	fi
 
-$(BUILD_DIR_BUILD)/%.bin: $(BUILD_DIR_BUILD)/%.nwa sim/output.bin
+$(BUILD_DIR_DEVICE)/%.bin: $(BUILD_DIR_DEVICE)/%.nwa sim/output.bin
 	@echo "BIN     $@"
 	$(Q) if [ -s sim/output.bin ]; then \
 		$(NWLINK) nwa-bin --external-data sim/output.bin $< $@; \
@@ -104,7 +105,7 @@ $(BUILD_DIR_BUILD)/%.bin: $(BUILD_DIR_BUILD)/%.nwa sim/output.bin
 		$(NWLINK) nwa-bin $< $@; \
 	fi
 
-$(BUILD_DIR_BUILD)/%.elf: $(BUILD_DIR_BUILD)/%.nwa sim/output.bin
+$(BUILD_DIR_DEVICE)/%.elf: $(BUILD_DIR_DEVICE)/%.nwa sim/output.bin
 	@echo "ELF     $@"
 	$(Q) if [ -s sim/output.bin ]; then \
 		$(NWLINK) nwa-elf --external-data sim/output.bin $< $@; \
@@ -112,7 +113,7 @@ $(BUILD_DIR_BUILD)/%.elf: $(BUILD_DIR_BUILD)/%.nwa sim/output.bin
 		$(NWLINK) nwa-elf $< $@; \
 	fi
 
-$(BUILD_DIR_BUILD)/app.nwa: $(call object_for_dir,$(BUILD_DIR_BUILD),$(src)) $(BUILD_DIR_BUILD)/icon.o
+$(BUILD_DIR_DEVICE)/app.nwa: $(call object_for_dir,$(BUILD_DIR_DEVICE),$(src)) $(BUILD_DIR_DEVICE)/icon.o
 	@echo "LD      $@"
 	$(Q) $(CC) $(CFLAGS_DEVICE) $(LDFLAGS) $^ -o $@
 
@@ -121,7 +122,17 @@ $(BUILD_DIR_SIMULATOR)/app.nwb: $(call object_for_dir,$(BUILD_DIR_SIMULATOR),$(s
 	@echo "LDSIMULATOR  $@"
 	$(Q) $(CXX_SIMULATOR) $(CFLAGS_SIMULATOR) $(LDFLAGS_SIMULATOR) $(call object_for_dir,$(BUILD_DIR_SIMULATOR),$(src_simulator)) -o $@
 
-$(addprefix $(BUILD_DIR_BUILD)/,%.o): %.c | $(BUILD_DIR_BUILD)
+$(BUILD_DIR_DEVICE)/src/libs/storage.o: src/libs/storage.c | $(BUILD_DIR_DEVICE)
+	@echo "CC      $^"
+	$(Q) mkdir -p $(dir $@)
+	$(Q) $(CC) $(CFLAGS_DEVICE) -w -c $^ -o $@
+
+$(BUILD_DIR_SIMULATOR)/src/libs/storage.o: src/libs/storage.c | $(BUILD_DIR_SIMULATOR)
+	@echo "CCSIMULATOR  $^"
+	$(Q) mkdir -p $(dir $@)
+	$(Q) $(CC_SIMULATOR) $(CFLAGS_SIMULATOR) -w -c $^ -o $@
+
+$(addprefix $(BUILD_DIR_DEVICE)/,%.o): %.c | $(BUILD_DIR_DEVICE)
 	@echo "CC      $^"
 	$(Q) mkdir -p $(dir $@)
 	$(Q) $(CC) $(CFLAGS_DEVICE) -c $^ -o $@
@@ -132,12 +143,12 @@ $(addprefix $(BUILD_DIR_SIMULATOR)/,%.o): %.c | $(BUILD_DIR_SIMULATOR)
 	$(Q) $(CC_SIMULATOR) $(CFLAGS_SIMULATOR) -c $^ -o $@
 
 
-$(BUILD_DIR_BUILD)/icon.o: assets/icon.png
+$(BUILD_DIR_DEVICE)/icon.o: assets/icon.png
 	@echo "ICON    $<"
 	$(Q) $(NWLINK) png-icon-o $< $@
 
-.PRECIOUS: $(BUILD_DIR_BUILD) $(BUILD_DIR_SIMULATOR)
-$(BUILD_DIR_BUILD):
+.PRECIOUS: $(BUILD_DIR_DEVICE) $(BUILD_DIR_SIMULATOR)
+$(BUILD_DIR_DEVICE):
 	$(Q) mkdir -p $@/src
 
 $(BUILD_DIR_SIMULATOR):
@@ -146,4 +157,10 @@ $(BUILD_DIR_SIMULATOR):
 .PHONY: clean
 clean:
 	@echo "CLEAN"
-	$(Q) rm -rf $(BUILD_DIR_BUILD) $(BUILD_DIR_SIMULATOR)
+	$(Q) if [ "$(origin PLATFORM)" = "file" ]; then \
+		rm -rf $(BUILD_DIR_DEVICE) $(BUILD_DIR_SIMULATOR); \
+	elif [ "$(PLATFORM)" = "simulator" ]; then \
+		rm -rf $(BUILD_DIR_SIMULATOR); \
+	else \
+		rm -rf $(BUILD_DIR_DEVICE); \
+	fi

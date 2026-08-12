@@ -1,6 +1,7 @@
 #include "libs/eadk.h"
 #include "display.h"
 #include "macro.h"
+#include "input.h"
 
 #include <stdint.h>
 #include <stdlib.h>
@@ -13,11 +14,14 @@ uint32_t nb_previews = 0;
 uint32_t nb_total_images = 0;
 uint32_t nb_images = 0;
 
+uint32_t current_index = 0;
+bool preview_mode = true;
+
+eadk_keyboard_state_t state;
+
 
 int main(void) {
     short_clear_screen();
-
-    char buf[8];
 
     external_data_size = eadk_external_data_size;
     
@@ -45,65 +49,59 @@ int main(void) {
 
     /*-----------------------------------------------------*/
 
-    uint32_t current_index = 0;
-    bool preview_mode = true;
-
-    bool ok_pressed = false;
-    bool back_pressed = false;
-    bool left_pressed = false;
-    bool right_pressed = false;
-    bool up_pressed = false;
-    bool down_pressed = false;
-
-    eadk_keyboard_state_t state;
-    eadk_keyboard_state_t last_state;
+    preview_screen();
+    eadk_timing_msleep(300);
 
     while (1) {
         state = eadk_keyboard_scan();
 
-        if (eadk_keyboard_key_down(state, eadk_key_home )) break;
+        if (keyboard_only_key_down(state, eadk_key_home )) break;
 
-        if (eadk_keyboard_key_down(state, eadk_key_ok   )) ok_pressed = true;
-        else ok_pressed = false;
-        if (eadk_keyboard_key_down(state, eadk_key_back )) back_pressed = true;
-        else back_pressed = false;
-        if (eadk_keyboard_key_down(state, eadk_key_left )) left_pressed = true;
-        else left_pressed = false;
-        if (eadk_keyboard_key_down(state, eadk_key_right)) right_pressed = true;
-        else right_pressed = false;
-        if (eadk_keyboard_key_down(state, eadk_key_up   )) up_pressed = true;
-        else up_pressed = false;
-        if (eadk_keyboard_key_down(state, eadk_key_down )) down_pressed = true;
-        else down_pressed = false;
-
-        if (state != last_state) {
-            if (preview_mode) {
-                if (ok_pressed) preview_mode = false;
-                if (right_pressed && current_index < nb_images - 1) current_index++;
-                if (left_pressed && current_index > 0) current_index--;
-                if (up_pressed) { if (current_index >= 5) current_index -= 5; else current_index = 0; }
-                if (down_pressed) { if (current_index + 5 < nb_images) current_index += 5; else current_index = nb_images - 1; }
-                
-
-                uint8_t column = ((current_index % 25) % 5);
-                uint8_t line = ((current_index % 25) / 5);
-
-                safe_display_image((current_index) / 25);
-
-                short_draw_empty_rectangle((eadk_rect_t){column * 64, line * 48, 64 - 1, 48 - 1});
-
-                eadk_keyboard_scan();
+        if (keyboard_only_key_down(state, eadk_key_ok   )) {
+            if (preview_mode){
+                preview_mode = false;
+                image_screen();
             }
-            else {
-                if (back_pressed) preview_mode = true;
-                safe_display_image(current_index + nb_previews);
-                eadk_keyboard_scan();
-            }
-            FORMAT_SIZE(buf, current_index);
-            short_display_draw_string(buf, (eadk_point_t){0,0});
         }
-        
-        last_state = state;
+        if (keyboard_only_key_down(state, eadk_key_back )) {
+            if (!preview_mode) {
+                preview_mode = true;
+                preview_screen();
+            }
+        }
+
+        if (keyboard_only_key_down(state, eadk_key_left )) {
+            if (preview_mode) {
+                if (current_index > 0) current_index--;
+                preview_screen();
+                handle_held_key(eadk_key_left, move_left, 150, 50);
+            }
+        }
+        if (keyboard_only_key_down(state, eadk_key_right)) {
+            if (preview_mode) {
+                if (current_index < nb_images - 1) current_index++;
+                preview_screen();
+                handle_held_key(eadk_key_right, move_right, 150, 50);
+            }
+        }
+        if (keyboard_only_key_down(state, eadk_key_up   )) {
+            if (preview_mode) {
+                if (current_index >= 5) current_index -= 5; 
+                else current_index = 0;
+                preview_screen();
+                handle_held_key(eadk_key_up, move_up, 150, 50);
+            }
+
+        }
+        if (keyboard_only_key_down(state, eadk_key_down )) {
+            if (preview_mode) {
+                if (current_index + 5 < nb_images) current_index += 5;
+                else current_index = nb_images - 1;
+                preview_screen();
+                handle_held_key(eadk_key_down, move_down, 150, 50);
+            }
+        }
+
     }
 
     free(images);
