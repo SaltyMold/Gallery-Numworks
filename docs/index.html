@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image → NWIP</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #f3f3f1;
+            --surface: #ffffff;
+            --line: #e2e2de;
+            --line-strong: #cbcbc5;
+            --ink: #18181b;
+            --ink-dim: #6d6d68;
+            --ink-faint: #a3a39c;
+            --accent: #2f5aa8;
+            --accent-ink: #ffffff;
+            --accent-soft: #e8eefa;
+            --success: #1f7a4d;
+            --success-soft: #e5f5eb;
+            --error: #c23b3b;
+            --error-soft: #fbe9e9;
+            --warning: #a8690f;
+            --warning-soft: #faf0dc;
+            --radius: 8px;
+            --radius-sm: 5px;
+            --sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            --mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: var(--sans);
+            background: var(--bg);
+            color: var(--ink);
+            min-height: 100vh;
+            padding: 24px 20px 60px;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .app {
+            max-width: 1180px;
+            margin: 0 auto;
+        }
+
+        /* Top bar */
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            gap: 16px;
+            padding-bottom: 16px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--line-strong);
+        }
+
+        .topbar h1 {
+            font-size: 1.05rem;
+            font-weight: 600;
+            letter-spacing: -0.01em;
+        }
+
+        .topbar .subtitle {
+            font-family: var(--mono);
+            font-size: 0.72rem;
+            color: var(--ink-faint);
+            margin-top: 4px;
+        }
+
+        .topbar .meta {
+            font-family: var(--mono);
+            font-size: 0.72rem;
+            color: var(--ink-faint);
+            text-align: right;
+            white-space: nowrap;
+        }
+
+        /* Workspace grid */
+        .workspace {
+            display: grid;
+            grid-template-columns: 280px 1fr 300px;
+            gap: 16px;
+            align-items: start;
+        }
+
+        .col {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            min-width: 0;
+        }
+
+        .panel {
+            background: var(--surface);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            padding: 16px;
+        }
+
+        .panel-label {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            font-family: var(--mono);
+            font-size: 0.68rem;
+            font-weight: 600;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--ink-dim);
+            margin-bottom: 12px;
+        }
+
+        .panel-label .count {
+            color: var(--ink-faint);
+            font-weight: 500;
+        }
+
+        /* Drop zone */
+        .drop-zone {
+            border: 1px dashed var(--line-strong);
+            border-radius: var(--radius-sm);
+            padding: 22px 14px;
+            text-align: center;
+            cursor: pointer;
+            background: var(--bg);
+            transition: border-color 0.15s ease, background 0.15s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .drop-zone:hover,
+        .drop-zone.dragover {
+            background: var(--accent-soft);
+            border-color: var(--accent);
+        }
+
+        .drop-icon {
+            width: 26px;
+            height: 26px;
+            color: var(--ink-faint);
+        }
+
+        .drop-zone:hover .drop-icon,
+        .drop-zone.dragover .drop-icon {
+            color: var(--accent);
+        }
+
+        .drop-zone p {
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--ink);
+        }
+
+        .drop-zone small {
+            font-family: var(--mono);
+            font-size: 0.68rem;
+            color: var(--ink-faint);
+        }
+
+        /* Images list */
+        .images-list {
+            max-height: 320px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-bottom: 12px;
+        }
+
+        .image-item {
+            display: grid;
+            grid-template-columns: 36px 1fr auto;
+            gap: 10px;
+            align-items: center;
+            padding: 6px;
+            border: 1px solid var(--line);
+            border-radius: var(--radius-sm);
+        }
+
+        .image-thumbnail {
+            width: 36px;
+            height: 36px;
+            border-radius: 4px;
+            object-fit: cover;
+            background: var(--bg);
+        }
+
+        .image-info { min-width: 0; }
+
+        .image-name {
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--ink);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .image-size {
+            font-family: var(--mono);
+            color: var(--ink-faint);
+            font-size: 0.68rem;
+            margin-top: 1px;
+        }
+
+        .remove-btn {
+            background: transparent;
+            color: var(--ink-faint);
+            border: 1px solid var(--line);
+            border-radius: 4px;
+            padding: 4px 8px;
+            cursor: pointer;
+            font-family: var(--mono);
+            font-size: 0.68rem;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            transition: color 0.15s ease, border-color 0.15s ease;
+        }
+
+        .remove-btn:hover {
+            color: var(--error);
+            border-color: var(--error);
+        }
+
+        /* Preview */
+        .preview-box {
+            background: var(--bg);
+            border-radius: var(--radius-sm);
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-sizing: border-box;
+            overflow: hidden;
+        }
+
+        .preview-frame {
+            width: 100%;
+            max-width: 320px;
+            position: relative;
+            aspect-ratio: 4 / 3;
+            overflow: hidden;
+            border-radius: 2px;
+            background: var(--bg);
+            border: 2px solid var(--error);
+        }
+
+        .preview-frame canvas {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+            display: block;
+        }
+
+        .preview-label {
+            font-family: var(--mono);
+            color: #8b96a3;
+            font-size: 0.68rem;
+            text-align: center;
+            min-height: 1.2em;
+        }
+
+        /* Settings */
+        .settings-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .setting-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .setting-group > label {
+            font-size: 0.78rem;
+            font-weight: 500;
+            color: var(--ink);
+        }
+
+        .quality-display {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .quality-value {
+            font-family: var(--mono);
+            background: var(--accent-soft);
+            color: var(--accent);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 0.78rem;
+            min-width: 32px;
+            text-align: center;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 18px; /* larger hitbox */
+            appearance: none;
+            -webkit-appearance: none;
+            background: transparent; /* use thumb and track visuals only */
+            border-radius: 2px;
+            cursor: pointer;
+            padding: 6px 0; /* extra vertical padding for easier clicks */
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px; /* bigger thumb */
+            height: 20px;
+            border-radius: 50%;
+            background: var(--accent);
+            cursor: pointer;
+            border: 2px solid var(--surface);
+            box-shadow: 0 0 0 1px var(--accent);
+        }
+
+        /* Visible track for WebKit */
+        input[type="range"]::-webkit-slider-runnable-track {
+            height: 6px;
+            background: var(--line-strong);
+            border-radius: 6px;
+        }
+
+        /* Visible track + progress for Firefox */
+        input[type="range"]::-moz-range-track {
+            height: 6px;
+            background: var(--line-strong);
+            border-radius: 6px;
+        }
+
+        input[type="range"]::-moz-range-progress {
+            background: var(--accent);
+            height: 6px;
+            border-radius: 6px;
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--accent);
+            cursor: pointer;
+            border: 2px solid var(--surface);
+            box-shadow: 0 0 0 1px var(--accent);
+        }
+
+        .toggle-switch {
+            display: flex;
+            background: var(--bg);
+            border: 1px solid var(--line);
+            border-radius: 6px;
+            padding: 2px;
+        }
+
+        .toggle-option {
+            flex: 1;
+            padding: 6px 8px;
+            border-radius: 4px;
+            text-align: center;
+            font-family: var(--mono);
+            font-size: 0.68rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: var(--ink-dim);
+            cursor: pointer;
+            transition: background 0.15s ease, color 0.15s ease;
+        }
+
+        .toggle-option.active {
+            background: var(--accent);
+            color: var(--accent-ink);
+        }
+
+        /* Buttons */
+        .action-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 14px;
+        }
+
+        .btn {
+            padding: 10px 16px;
+            border: 1px solid transparent;
+            border-radius: var(--radius-sm);
+            font-family: var(--sans);
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: var(--accent-ink);
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: #274c8f;
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--ink-dim);
+            border-color: var(--line);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--line-strong);
+            color: var(--ink);
+        }
+
+        /* Status */
+        .status {
+            display: none;
+            margin-top: 10px;
+            padding: 8px 10px;
+            border-radius: var(--radius-sm);
+            font-size: 0.76rem;
+            font-weight: 500;
+            text-align: center;
+        }
+
+        .status.processing { display: block; background: var(--accent-soft); color: var(--accent); }
+        .status.success { display: block; background: var(--success-soft); color: var(--success); }
+        .status.error { display: block; background: var(--error-soft); color: var(--error); }
+
+        /* Terminal */
+        .terminal {
+            background: #14171a;
+            color: #9fb0be;
+            border-radius: var(--radius-sm);
+            padding: 12px;
+            font-family: var(--mono);
+            font-size: 0.74rem;
+            height: 320px;
+            overflow-y: auto;
+            line-height: 1.6;
+        }
+
+        .log-entry { margin-bottom: 2px; word-break: break-word; }
+        .log-entry.error { color: #f38b8b; }
+        .log-entry.success { color: #7dd4a3; }
+        .log-entry.info { color: #82b8e8; }
+        .log-entry.warning { color: #e3b464; }
+
+        /* Download */
+        .download-section {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .file-info {
+            background: var(--bg);
+            border: 1px solid var(--line);
+            padding: 10px;
+            border-radius: var(--radius-sm);
+            font-family: var(--mono);
+            font-size: 0.74rem;
+            color: var(--ink-dim);
+            line-height: 1.6;
+        }
+
+        .file-info strong { color: var(--ink); }
+
+        .empty-state {
+            text-align: center;
+            padding: 16px 8px;
+            color: var(--ink-faint);
+            font-size: 0.78rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 1050px) {
+            .workspace { grid-template-columns: 1fr 1fr; }
+            .col:nth-child(3) { grid-column: 1 / -1; }
+            .terminal { height: 220px; }
+        }
+
+        @media (max-width: 640px) {
+            body { padding: 16px 14px 40px; }
+            .workspace { grid-template-columns: 1fr; }
+            .col:nth-child(3) { grid-column: auto; }
+            .topbar { flex-direction: column; align-items: flex-start; gap: 4px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <div class="topbar">
+            <div>
+                <h1>Image → NWIP</h1>
+                <div class="subtitle">Numworks gallery converter — runs entirely in the browser</div>
+            </div>
+            <div class="meta">320×240 · JPEG</div>
+        </div>
+
+        <div class="workspace">
+            <div class="col">
+                <div class="panel">
+                    <div class="panel-label">Upload</div>
+                    <div class="drop-zone" id="dropZone">
+                        <svg class="drop-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4"/><path d="M7 9l5-5 5 5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>
+                        <p>Click to select images</p>
+                        <small>JPG · PNG · WebP</small>
+                    </div>
+                    <input type="file" id="fileInput" multiple accept="image/*" style="display: none;">
+                </div>
+
+                <div class="panel">
+                    <div class="panel-label">Images <span class="count">(<span id="imageCount">0</span>)</span></div>
+                    <div class="images-list" id="imagesList">
+                        <div class="empty-state">No images added yet</div>
+                    </div>
+                    <button class="btn btn-secondary" id="clearBtn">Remove all</button>
+                </div>
+            </div>
+
+            <div class="col">
+                <div class="panel">
+                    <div class="panel-label">Preview</div>
+                    <div class="preview-box">
+                        <div class="preview-frame">
+                            <canvas id="previewCanvas" width="320" height="240"></canvas>
+                        </div>
+                        <div class="preview-label" id="previewLabel">No preview available</div>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-label">Settings</div>
+                    <div class="settings-grid">
+                        <div class="setting-group">
+                            <div class="quality-display">
+                                <label>JPEG quality</label>
+                                <div class="quality-value" id="qualityValue">80</div>
+                            </div>
+                            <input type="range" id="quality" min="5" max="95" value="80" step="5">
+                        </div>
+
+                        <div class="setting-group">
+                            <label>Resize mode</label>
+                            <div class="toggle-switch" id="modeToggle">
+                                <div class="toggle-option" data-mode="scale">Scale</div>
+                                <div class="toggle-option active" data-mode="crop">Crop</div>
+                                <div class="toggle-option" data-mode="padding">Padding</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="action-buttons">
+                        <button class="btn btn-primary" id="generateBtn" disabled>Start generation</button>
+                    </div>
+
+                    <div class="status" id="status"></div>
+                </div>
+            </div>
+
+            <div class="col">
+                <div class="panel">
+                    <div class="panel-label">Log</div>
+                    <div class="terminal" id="terminal">
+                        <div class="empty-state">Waiting for input…</div>
+                    </div>
+                </div>
+
+                <div class="panel download-section">
+                    <div class="panel-label">Output</div>
+                    <div class="file-info">
+                        <div id="fileInfo">No file generated yet</div>
+                    </div>
+                    <button class="btn btn-primary" id="downloadBtn" disabled>Download output.nwip</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="index.js"></script>
+</body>
+</html>

@@ -16,7 +16,7 @@ OUTPUT_BIN_NAME = "output.nwip"
 TARGET_SIZE = (320, 240)
 preview_CELL_SIZE = (64, 48)
 preview_GRID = (5, 5)
-SUPPORTED_IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp", ".avif"}
+SUPPORTED_IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp"}
 
 
 def is_supported_image_path(path: str) -> bool:
