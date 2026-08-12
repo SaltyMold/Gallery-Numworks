@@ -72,32 +72,26 @@ int main(void) {
 
         if (keyboard_only_key_down(state, eadk_key_left )) {
             if (preview_mode) {
-                if (current_index > 0) current_index--;
-                preview_screen();
+                move_left();
                 handle_held_key(eadk_key_left, move_left, 150, 50);
             }
         }
         if (keyboard_only_key_down(state, eadk_key_right)) {
             if (preview_mode) {
-                if (current_index < nb_images - 1) current_index++;
-                preview_screen();
+                move_right();
                 handle_held_key(eadk_key_right, move_right, 150, 50);
             }
         }
         if (keyboard_only_key_down(state, eadk_key_up   )) {
             if (preview_mode) {
-                if (current_index >= 5) current_index -= 5; 
-                else current_index = 0;
-                preview_screen();
+                move_up();
                 handle_held_key(eadk_key_up, move_up, 150, 50);
             }
 
         }
         if (keyboard_only_key_down(state, eadk_key_down )) {
             if (preview_mode) {
-                if (current_index + 5 < nb_images) current_index += 5;
-                else current_index = nb_images - 1;
-                preview_screen();
+                move_down();
                 handle_held_key(eadk_key_down, move_down, 150, 50);
             }
         }
