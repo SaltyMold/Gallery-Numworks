@@ -1,6 +1,6 @@
 # Image Conversion Utility
 
-This script converts multiple input images into a single `output.bin` file. It also generates intermediate files inside an `output` folder.
+This script converts multiple input images into a single `output.nwip` file. It also generates intermediate files inside an `output` folder.
 
 ## Requirements
 
@@ -38,7 +38,7 @@ python main.py -q 80 -a input/ -c
 
 ## Output
 
-- `output.bin` is written to the current working directory.
+- `output.nwip` is written to the current working directory.
 - All intermediate images are written to subfolders under the `output` directory.
 
 ### Intermediate folders
@@ -72,7 +72,7 @@ The `output/preview/quality` directory contains:
 
 - `preview_0_<quality>.jpg`, `preview_1_<quality>.jpg`, ...
 
-## Binary format (`output.bin`)
+## Binary format (`output.nwip`)
 
 The file format is:
 
@@ -101,11 +101,11 @@ preview images are built in groups of up to 25 input images. Each image is resiz
 
 - If there are fewer than 25 images in a preview group, remaining cells are filled with black.
 - If more than 25 input images are provided, additional preview images are created.
-- Preview images are stored at the beginning of the `output.bin` file, before individual images.
+- Preview images are stored at the beginning of the `output.nwip` file, before individual images.
 
 ## Notes
 
 - The script validates JPEG quality and file existence.
-- The `output.bin` file always uses the requested JPEG quality for each image's stored JPEG bytes.
+- The `output.nwip` file always uses the requested JPEG quality for each image's stored JPEG bytes.
 - Image caching: if both `output/resized/` and `output/quality/` versions of an image exist, they are reused instead of being regenerated (unless `-c` is used).
 - Preview images are generated internally as 5×5 grids (25 images per preview, up to 64×48 pixels per cell) but are stored in the binary file just like regular images.

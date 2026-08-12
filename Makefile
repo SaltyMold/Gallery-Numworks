@@ -19,6 +19,7 @@ endef
 NWLINK = npm_config_loglevel=silent npx --yes --quiet -- nwlink@0.0.19
 LINK_GC = 1
 LTO = 1
+EXTERNAL_DATA ?= sim/output.nwip
 
 define object_for
 $(addprefix $(BUILD_DIR)/,$(addsuffix .o,$(basename $(1))))
@@ -84,31 +85,31 @@ check: $(BUILD_DIR_DEVICE)/app.bin
 run: build
 	@echo "RUN ($(PLATFORM))"
 	$(Q) if [ "$(PLATFORM)" = "simulator" ]; then \
-		if [ -s sim/output.bin ]; then \
-			./sim/epsilon.bin --nwb $(BUILD_DIR_SIMULATOR)/app.nwb --nwb-external-data sim/output.bin; \
+		if [ -s $(EXTERNAL_DATA) ]; then \
+			./sim/epsilon.bin --nwb $(BUILD_DIR_SIMULATOR)/app.nwb --nwb-external-data $(EXTERNAL_DATA); \
 		else \
 			./sim/epsilon.bin --nwb $(BUILD_DIR_SIMULATOR)/app.nwb; \
 		fi; \
 	else \
-		if [ -s sim/output.bin ]; then \
-			$(NWLINK) install-nwa --external-data sim/output.bin $(BUILD_DIR_DEVICE)/app.nwa; \
+		if [ -s $(EXTERNAL_DATA) ]; then \
+			$(NWLINK) install-nwa --external-data $(EXTERNAL_DATA) $(BUILD_DIR_DEVICE)/app.nwa; \
 		else \
 			$(NWLINK) install-nwa $(BUILD_DIR_DEVICE)/app.nwa; \
 		fi; \
 	fi
 
-$(BUILD_DIR_DEVICE)/%.bin: $(BUILD_DIR_DEVICE)/%.nwa sim/output.bin
+$(BUILD_DIR_DEVICE)/%.bin: $(BUILD_DIR_DEVICE)/%.nwa $(EXTERNAL_DATA)
 	@echo "BIN     $@"
-	$(Q) if [ -s sim/output.bin ]; then \
-		$(NWLINK) nwa-bin --external-data sim/output.bin $< $@; \
+	$(Q) if [ -s $(EXTERNAL_DATA) ]; then \
+		$(NWLINK) nwa-bin --external-data $(EXTERNAL_DATA) $< $@; \
 	else \
 		$(NWLINK) nwa-bin $< $@; \
 	fi
 
-$(BUILD_DIR_DEVICE)/%.elf: $(BUILD_DIR_DEVICE)/%.nwa sim/output.bin
+$(BUILD_DIR_DEVICE)/%.elf: $(BUILD_DIR_DEVICE)/%.nwa $(EXTERNAL_DATA)
 	@echo "ELF     $@"
-	$(Q) if [ -s sim/output.bin ]; then \
-		$(NWLINK) nwa-elf --external-data sim/output.bin $< $@; \
+	$(Q) if [ -s $(EXTERNAL_DATA) ]; then \
+		$(NWLINK) nwa-elf --external-data $(EXTERNAL_DATA) $< $@; \
 	else \
 		$(NWLINK) nwa-elf $< $@; \
 	fi

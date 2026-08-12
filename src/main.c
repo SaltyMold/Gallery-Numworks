@@ -73,26 +73,26 @@ int main(void) {
         if (keyboard_only_key_down(state, eadk_key_left )) {
             if (preview_mode) {
                 move_left();
-                handle_held_key(eadk_key_left, move_left, 150, 50);
+                handle_held_key(eadk_key_left, move_left, 300, 100);
             }
         }
         if (keyboard_only_key_down(state, eadk_key_right)) {
             if (preview_mode) {
                 move_right();
-                handle_held_key(eadk_key_right, move_right, 150, 50);
+                handle_held_key(eadk_key_right, move_right, 300, 100);
             }
         }
         if (keyboard_only_key_down(state, eadk_key_up   )) {
             if (preview_mode) {
                 move_up();
-                handle_held_key(eadk_key_up, move_up, 150, 50);
+                handle_held_key(eadk_key_up, move_up, 300, 100);
             }
 
         }
         if (keyboard_only_key_down(state, eadk_key_down )) {
             if (preview_mode) {
                 move_down();
-                handle_held_key(eadk_key_down, move_down, 150, 50);
+                handle_held_key(eadk_key_down, move_down, 300, 100);
             }
         }
 

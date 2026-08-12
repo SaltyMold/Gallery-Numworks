@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Image Viewer - output.bin</title>
+    <title>Image Viewer - output.nwip</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -94,7 +94,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>output.bin Image Viewer</h1>
+        <h1>output.nwip Image Viewer</h1>
         
         <div class="controls">
             <input type="number" id="imageNumber" min="0" placeholder="Image #" disabled>
@@ -115,14 +115,14 @@
         let totalImages = 0;
         let previewCount = 0;
 
-        // Load output.bin on page load
+        // Load output.nwip on page load
         window.addEventListener('load', loadOutputBin);
 
         function loadOutputBin() {
-            fetch('output.bin')
+            fetch('output.nwip')
                 .then(response => {
                     if (!response.ok) {
-                        throw new Error('output.bin not found in the same directory');
+                        throw new Error('output.nwip not found in the same directory');
                     }
                     return response.arrayBuffer();
                 })

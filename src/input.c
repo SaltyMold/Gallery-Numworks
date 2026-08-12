@@ -11,10 +11,10 @@ bool keyboard_only_key_down(eadk_keyboard_state_t state, eadk_key_t key) {
 
 void handle_held_key(eadk_key_t key, void (*action)(void), int initial_delay, int repeat_delay) {
     // Initial delay before repeat starts
-    for (int i = 0; i < initial_delay; i++) {
+    uint64_t start_time = eadk_timing_millis();
+    while (eadk_timing_millis() - start_time < initial_delay) {
         state = eadk_keyboard_scan();
         if (!keyboard_only_key_down(state, key)) return;
-        eadk_timing_msleep(1);
     }
     
     // Repeat action while key is held
@@ -22,10 +22,10 @@ void handle_held_key(eadk_key_t key, void (*action)(void), int initial_delay, in
         state = eadk_keyboard_scan();
         action();
         
-        for (int i = 0; i < repeat_delay; i++) {
+        uint64_t repeat_start = eadk_timing_millis();
+        while (eadk_timing_millis() - repeat_start < repeat_delay) {
             state = eadk_keyboard_scan();
             if (!keyboard_only_key_down(state, key)) return;
-            eadk_timing_msleep(1);
         }
     }
 }

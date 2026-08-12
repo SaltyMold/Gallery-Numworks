@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Inspect output.bin and print header information and image offsets (with sizes in KB).
+"""Inspect output.nwip and print header information and image offsets (with sizes in KB).
 
 Usage:
-    python inspect_output_bin.py [path/to/output.bin]
+    python inspect_output_bin.py [path/to/output.nwip]
 
-If no path is provided the script will try to read `output.bin` from the
+If no path is provided the script will try to read `output.nwip` from the
 current working directory.
 """
 import argparse
@@ -18,8 +18,8 @@ def read_uint32(data: bytes, offset: int) -> int:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Print preview count, total images and offset/size pairs from output.bin")
-    parser.add_argument("file", nargs="?", default="output.bin", help="Path to output.bin (default: ./output.bin)")
+    parser = argparse.ArgumentParser(description="Print preview count, total images and offset/size pairs from output.nwip")
+    parser.add_argument("file", nargs="?", default="output.nwip", help="Path to output.nwip (default: ./output.nwip)")
     args = parser.parse_args()
 
     path = args.file

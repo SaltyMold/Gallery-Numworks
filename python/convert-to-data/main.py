@@ -12,7 +12,7 @@ OUTPUT_DIR_NAME = "output"
 RESIZED_DIR_NAME = "resized"
 QUALITY_DIR_NAME = "quality"
 preview_DIR_NAME = "preview"
-OUTPUT_BIN_NAME = "output.bin"
+OUTPUT_BIN_NAME = "output.nwip"
 TARGET_SIZE = (320, 240)
 preview_CELL_SIZE = (64, 48)
 preview_GRID = (5, 5)
@@ -118,7 +118,7 @@ def encode_images_to_bin(jpeg_data_list: list[bytes], preview_count: int) -> byt
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Convert multiple images to a single output.bin with JPEG data and a preview image.")
+    parser = argparse.ArgumentParser(description="Convert multiple images to a single output.nwip with JPEG data and a preview image.")
     parser.add_argument(
         "-q",
         dest="quality",
